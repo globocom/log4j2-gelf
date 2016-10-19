@@ -51,6 +51,7 @@ public class GelfAppender extends AbstractAppender {
     private final boolean includeStackTrace;
     private final boolean includeExceptionCause;
     private final Map<String, Object> additionalFields;
+    private boolean blocking = false;
 
     private GelfTransport client;
 
@@ -64,7 +65,8 @@ public class GelfAppender extends AbstractAppender {
                            final boolean includeThreadContext,
                            final boolean includeStackTrace,
                            final KeyValuePair[] additionalFields,
-                           final boolean includeExceptionCause) {
+                           final boolean includeExceptionCause,
+                           final boolean blocking ) {
         super(name, filter, layout, ignoreExceptions);
         this.gelfConfiguration = gelfConfiguration;
         this.hostName = hostName;
@@ -72,6 +74,7 @@ public class GelfAppender extends AbstractAppender {
         this.includeThreadContext = includeThreadContext;
         this.includeStackTrace = includeStackTrace;
         this.includeExceptionCause = includeExceptionCause;
+        this.blocking = blocking;
 
         if (null != additionalFields) {
             this.additionalFields = new HashMap<>();
@@ -155,9 +158,14 @@ public class GelfAppender extends AbstractAppender {
 
         final GelfMessage gelfMessage = builder.build();
         try {
-            final boolean sent = client.trySend(gelfMessage);
-            if (!sent) {
-                LOG.debug("Couldn't send message: {}", gelfMessage);
+
+            if (!blocking) {
+                final boolean sent = client.trySend(gelfMessage);
+                if (!sent) {
+                    LOG.debug("Couldn't send message: {}", gelfMessage);
+                }
+            } else {
+                client.send(gelfMessage);
             }
         } catch (Exception e) {
             throw new AppenderLoggingException("failed to write log event to GELF server: " + e.getMessage(), e);
@@ -268,7 +276,8 @@ public class GelfAppender extends AbstractAppender {
                                                   @PluginAttribute(value = "includeExceptionCause", defaultBoolean = false) Boolean includeExceptionCause,
                                                   @PluginAttribute(value = "tlsEnabled", defaultBoolean = false) Boolean tlsEnabled,
                                                   @PluginAttribute(value = "tlsEnableCertificateVerification", defaultBoolean = true) Boolean tlsEnableCertificateVerification,
-                                                  @PluginAttribute(value = "tlsTrustCertChainFilename") String tlsTrustCertChainFilename) {
+                                                  @PluginAttribute(value = "tlsTrustCertChainFilename") String tlsTrustCertChainFilename,
+                                                  @PluginAttribute(value = "blocking", defaultBoolean = false) Boolean blocking) {
         if (name == null) {
             LOGGER.error("No name provided for ConsoleAppender");
             return null;
@@ -314,6 +323,6 @@ public class GelfAppender extends AbstractAppender {
         }
 
         return new GelfAppender(name, layout, filter, ignoreExceptions, gelfConfiguration, hostName, includeSource,
-                includeThreadContext, includeStackTrace, additionalFields, includeExceptionCause);
+                includeThreadContext, includeStackTrace, additionalFields, includeExceptionCause, blocking);
     }
 }

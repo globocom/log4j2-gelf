@@ -1,14 +1,30 @@
 package org.graylog2.log4j2;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
 import org.apache.logging.log4j.ThreadContext;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.message.Message;
+import org.graylog2.gelfclient.GelfMessage;
+import org.graylog2.gelfclient.transport.GelfTransport;
 import org.junit.AfterClass;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class GelfAppenderTest {
+
+    GelfTransport mockedGelfTransport;
 
     @Test
     public void testLog() {
@@ -50,9 +66,66 @@ public class GelfAppenderTest {
         ThreadContext.clearAll();
     }
 
+    @Test
+    public void clientShouldUseSend() throws InterruptedException {
+        mockedGelfTransport = mock(GelfTransport.class);
+
+        //given
+        final GelfAppender gelfAppender = createGelfAppender(true, false, true);
+        final LogEvent event = createLogEventMock();
+
+
+        doNothing().when(mockedGelfTransport).send(any(GelfMessage.class));
+
+
+        // when
+        gelfAppender.append(event);
+
+        ArgumentCaptor<GelfMessage> gelfMessageCaptor = ArgumentCaptor.forClass(GelfMessage.class);
+        verify(mockedGelfTransport).send(gelfMessageCaptor.capture());
+    }
+
+    @Test
+    public void clientShouldUseTrySend() throws InterruptedException {
+        mockedGelfTransport = mock(GelfTransport.class);
+
+        //given
+        final GelfAppender gelfAppender = createGelfAppender(true, false, false);
+        final LogEvent event = createLogEventMock();
+
+
+        when(mockedGelfTransport.trySend(any(GelfMessage.class))).thenReturn(true);
+
+        // when
+        gelfAppender.append(event);
+
+        ArgumentCaptor<GelfMessage> gelfMessageCaptor = ArgumentCaptor.forClass(GelfMessage.class);
+        verify(mockedGelfTransport).trySend(gelfMessageCaptor.capture());
+    }
+
+
     @AfterClass
     public static void shutdown() throws InterruptedException {
         //need to wait to hope the underlying gelf client pushes the messages.
         Thread.sleep(500);
+    }
+
+
+    private GelfAppender createGelfAppender(final boolean includeStackTrace, final boolean includeExceptionCause, final boolean bloking) {
+        GelfAppender gelfAppender = new GelfAppender("appender", null, null, false, null, "host", false, false, includeStackTrace,
+                null, includeExceptionCause, bloking);
+        gelfAppender.setClient(mockedGelfTransport);
+        return gelfAppender;
+    }
+
+
+    private LogEvent createLogEventMock() {
+        final Message message = mock(Message.class);
+        given(message.getFormattedMessage()).willReturn("Some Message");
+
+        final LogEvent event = mock(LogEvent.class);
+        given(event.getMessage()).willReturn(message);
+        given(event.getLevel()).willReturn(Level.ALL);
+        return event;
     }
 }

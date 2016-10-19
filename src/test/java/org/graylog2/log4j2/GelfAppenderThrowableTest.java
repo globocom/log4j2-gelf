@@ -178,7 +178,7 @@ public class GelfAppenderThrowableTest {
 
     private GelfAppender createGelfAppender(final boolean includeStackTrace, final boolean includeExceptionCause) {
         GelfAppender gelfAppender = new GelfAppender("appender", null, null, false, null, "host", false, false, includeStackTrace,
-                null, includeExceptionCause);
+                null, includeExceptionCause, false);
         gelfAppender.setClient(mockedGelfTransport);
         return gelfAppender;
     }
