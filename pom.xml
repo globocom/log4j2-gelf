@@ -13,7 +13,7 @@
 
     <groupId>com.globo.graylog2</groupId>
     <artifactId>log4j2-gelf</artifactId>
-    <version>1.3.0.1-SNAPSHOT</version>
+    <version>1.3.0.1</version>
 
     <name>log4j2-gelf</name>
     <description>GELF Appender for Log4j2</description>
@@ -32,8 +32,23 @@
         <developerConnection>scm:git:git@github.com:globocom/log4j2-gelf.git</developerConnection>
         <!-- changed to plublish in m2 central using com.globo groupid-->
         <url>https://github.com/globocom/log4j2-gelf</url>
-        <tag>HEAD</tag>
+        <tag>log4j2-gelf-1.3.0.1</tag>
     </scm>
+
+    <distributionManagement>
+        <repository>
+            <id>sonatype-repo</id>
+            <name>Sonatype OSS Repository</name>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+        </repository>
+
+        <snapshotRepository>
+            <id>sonatype-snapshot</id>
+            <name>Sonatype OSS Snapshot Repository</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
+
 
     <issueManagement>
         <system>GitHub Issues</system>
