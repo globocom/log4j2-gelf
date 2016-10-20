@@ -72,7 +72,7 @@
         <maven.compiler.target>1.7</maven.compiler.target>
         <log4j2.version>2.4.1</log4j2.version>
         <gelfclient.version>1.4.0</gelfclient.version>
-        <!--<gpg.keyname>B1606F22</gpg.keyname>-->
+        <gpg.keyname>B1606F22</gpg.keyname>
     </properties>
 
     <dependencies>
@@ -119,7 +119,16 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-gpg-plugin</artifactId>
-                    <version>1.6</version>
+                    <version>1.5</version>
+                    <executions>
+                        <execution>
+                            <id>sign-artifacts</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>sign</goal>
+                            </goals>
+                        </execution>
+                    </executions>
                 </plugin>
             </plugins>
         </pluginManagement>
